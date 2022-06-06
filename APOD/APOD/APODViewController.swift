@@ -18,7 +18,7 @@ class APODViewController: UIViewController, PODDelegate, DJKFlipperDataSource {
     @IBOutlet weak var datePicker: UIDatePicker?
     @IBOutlet weak var flipView: DJKFlipperView?
     
-    var assetViewHeightConstant: NSLayoutConstraint?
+    @IBOutlet weak var assetViewHeightConstant: NSLayoutConstraint?
     
     private var prevViewController: APODViewController?
     private var currentViewController: APODViewController?
@@ -55,17 +55,22 @@ class APODViewController: UIViewController, PODDelegate, DJKFlipperDataSource {
     
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
-        guard let assetView = assetView else {
+        self.setupAssetViewHeightConstant()
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        self.setupAssetViewHeightConstant()
+    }
+    
+    func setupAssetViewHeightConstant() {
+        guard let flipView = flipView, let cvc = currentViewController else {
             return
         }
-
-        assetViewHeightConstant?.isActive = false
-        if UIDevice.current.orientation == .portrait {
-            assetViewHeightConstant = NSLayoutConstraint(item: assetView, attribute: .height, relatedBy: .equal, toItem:     assetView, attribute: .width, multiplier: 5.0/4.0, constant: 0.0)
-        } else {
-            assetViewHeightConstant = NSLayoutConstraint(item: assetView, attribute: .height, relatedBy: .equal, toItem: assetView, attribute: .width, multiplier: 9.0/16.0, constant: 0.0)
-        }
-        assetViewHeightConstant?.isActive = true
+        let heightConstant = (self.view.frame.height - flipView.frame.height) * 0.6
+        prevViewController?.assetViewHeightConstant?.constant = heightConstant
+        cvc.assetViewHeightConstant?.constant = heightConstant
+        nextViewController?.assetViewHeightConstant?.constant = heightConstant
     }
     
     // remove this
@@ -168,6 +173,7 @@ class APODViewController: UIViewController, PODDelegate, DJKFlipperDataSource {
             currentViewController?.view.frame = flipView.bounds
             nextViewController = storyboard.instantiateViewController(withIdentifier: "FlipSnapshot") as? APODViewController
             nextViewController?.view.frame = flipView.bounds
+            setupAssetViewHeightConstant()
         }
         guard let pvc = prevViewController, let nvc = nextViewController, let cvc = currentViewController else { return }
         let dateFormatter = DateFormatter()
